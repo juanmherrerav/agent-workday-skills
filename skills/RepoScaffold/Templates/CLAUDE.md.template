@@ -1,0 +1,109 @@
+# {{PROJECT_NAME}} — Agent Instructions
+
+> Personal or machine-specific overrides go in `CLAUDE.local.md` (git-ignored, never commit).
+
+## Working an issue → IssueFlow
+
+The feature/fix lifecycle for an issue is **one authoritative, gated procedure**: the
+**IssueFlow** skill, driven by this repo's profile at `.claude/workflow-profile.sh`. To work a
+issue, say:
+
+```
+work {{ISSUE_PREFIX}}-123
+```
+
+It runs: read the issue → provision an isolated worktree with its own ports → plan →
+implement until unit + full e2e + CI-parity preflight are green → **developer validation
+gate** → push, PR, preview URL, tracker comment, stakeholder message → **stakeholder gate** →
+rebase, re-validate, fast-forward merge, resolve, clean up. Don't hand-roll these steps from
+memory; invoke the skill.
+
+"Approve" alone is ambiguous. Say **"local approve"** for the developer gate (push + PR) and
+**"stakeholder approved"** for the merge.
+
+Principles it enforces:
+
+- **Worktree isolation** for all issue code under `.claude/local/worktrees/<issue>-<slug>`
+  (git-ignored). Never edit issue code in the main checkout.
+- **Full e2e, not smoke,** against a fresh server on the worktree's own port.
+- **Preflight mirrors CI 1:1.** `PREFLIGHT_CHECKS` in the profile is the CI lint/type job.
+  They change in the same commit, so green locally means green in CI.
+- **Human gates are hard stops.** Rebase onto `{{INTEGRATION_BRANCH}}` before a
+  fast-forward merge. Never force-push `{{INTEGRATION_BRANCH}}`.
+- **Parallel issues** = independent worktrees, each with port digit X (backend
+  {{PORT_BASE_BACKEND}}+X, frontend {{PORT_BASE_FRONTEND}}+X), collapsed serially into
+  `{{INTEGRATION_BRANCH}}`.
+
+**Branches:** `{{INTEGRATION_BRANCH}}` is the integration branch (issues land here).
+`{{PRODUCTION_BRANCH}}` is production (release PR via the ProductionDeployment skill).
+
+## Repo automation map
+
+| Where | What |
+| --- | --- |
+| `.claude/workflow-profile.sh` | committed profile: every product-specific value the skills read |
+| `.claude/release/settings-matrix.json` | env-parity matrix for production releases (optional) |
+| `.claude/README.md` | the shared-vs-local contract and first-time setup |
+| `.claude/local/` | git-ignored runtime: worktrees, live ledger, tracker cache, worklogs |
+| `.claude/settings.local.json` | per-machine permissions (git-ignored) |
+
+Skills used here: **IssueFlow** (lifecycle), **IssueSync** ({{TRACKER_NAME}}),
+**ProductionDeployment** (release), **CodeQuality** (scan + fix loop that feeds remediation cycles).
+
+---
+
+## Project overview
+
+{{PROJECT_SUMMARY}}
+
+**Stack:** {{STACK_SUMMARY}}
+
+## Commands
+
+These are the commands the profile and CI run. If one changes, change it in all three places.
+
+```bash
+{{INSTALL_CMDS}}
+
+{{SERVE_CMD}}            # dev server · health: GET {{HEALTH_PATH}} · app: {{APP_PATH}}
+
+{{UNIT_CMD}}             # unit tests
+{{E2E_CMD}}              # full e2e (needs a running server; IssueFlow starts one)
+
+{{LINT_CMDS}}
+```
+
+## Tests
+
+See [docs/TESTING.md](docs/TESTING.md) for the full guide. Short version:
+
+- **Tags:** `@smoke` (app shell), `@api-only` (no browser), `@live-api` (real upstreams,
+  skipped in CI), `@wip` (excluded everywhere), plus one tag per domain.
+- **API modes:** `fixture` (replay, default, CI), `live` (real upstreams), `record` (live +
+  save fixtures). Re-record with IssueFlow `e2e.sh --record` and commit the fixtures.
+- **Coverage gate:** {{COVERAGE_GATE}}, enforced in CI.
+- **Stale tests** are updated to the new requirement, never weakened to pass.
+
+## CI
+
+`{{CI_FILE}}`: lint → security → unit (version matrix) → coverage → e2e (fixture mode) →
+summary gate. {{NIGHTLY_NOTE}}
+
+### CI troubleshooting
+
+| Failure | Fix |
+| --- | --- |
+| Lint / format | `preflight.sh --fix` in the worktree, commit what it changed |
+| Type check | add the types; never blanket-ignore |
+| Unit test | run the single failing test locally with the command above |
+| Coverage below gate | add tests for the uncovered lines, not exclusions |
+| E2E | read the server log step in CI, reproduce with IssueFlow `e2e.sh` |
+| Lockfile out of sync | re-run the install command and commit the lockfile(s) |
+
+## Environment variables
+
+Copy `.env.example` → `.env.local`. Required and optional variables are declared in the
+profile (`ENV_REQUIRED_VARS`, `ENV_OPTIONAL_VARS`) and checked by IssueFlow
+`validate-env.sh`.
+
+{{ENV_TABLE}}

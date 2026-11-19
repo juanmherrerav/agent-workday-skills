@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# IssueSync adapter: jira — implements the verb contract (../README.md) over jira_sync.py,
+# a python-jira CLI. Prefers a copy the repo vendors at tools/jira-sync/jira_sync.py so the
+# project can version its own tweaks; otherwise uses the sibling copy.
+#
+# Env from the dispatcher: ISSUE_SYNC_ROOT, ISSUE_SYNC_DIR. Credentials (JIRA_CLOUD_URL or
+# JIRA_BASE_URL, JIRA_USER_EMAIL or JIRA_EMAIL, JIRA_API_TOKEN, optional JIRA_PROJECT_KEY) are
+# loaded by jira_sync.py from the process env, then <root>/.env.local and <root>/.env.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${ISSUE_SYNC_ROOT:-$PWD}"
+
+TOOL="$ROOT/tools/jira-sync/jira_sync.py"
+[ -f "$TOOL" ] || TOOL="$HERE/jira_sync.py"
+PY="$ROOT/.venv/bin/python"
+{ [ -x "$PY" ] && "$PY" -c "import jira, dotenv" 2>/dev/null; } \
+  || PY="uv run --quiet --with jira --with python-dotenv python"
+export JIRA_SYNC_DIR="${ISSUE_SYNC_DIR:-$ROOT/.claude/local/jira}"
+run() { (cd "$ROOT" && $PY "$TOOL" "$@"); }
+
+VERB="${1:-}"; shift || true
+KEY="${1:-}"
+need_key() { [ -n "$KEY" ] || { echo "✗ jira adapter: $VERB needs KEY" >&2; exit 1; }; }
+
+case "$VERB" in
+  markup)      echo wiki ;;
+  list)        run list ;;
+  pull)        run pull "$@" ;;
+  show)        need_key; run show "$KEY" ;;
+  comment)
+    need_key
+    f="${2:-}"; wl="$JIRA_SYNC_DIR/worklog/$KEY.md"
+    if [ -n "$f" ]; then
+      [ -f "$f" ] || { echo "✗ no such file: $f" >&2; exit 1; }
+      abs="$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"
+      [ "$abs" = "$wl" ] || { mkdir -p "$(dirname "$wl")"; cp "$abs" "$wl"; }
+    fi
+    run push "$KEY" ;;
+  transitions) need_key; run transition "$KEY" | sed -nE 's/^  - (.*)  \(id [0-9]+\)$/\1/p' ;;
+  transition)  need_key; run transition "$KEY" "${2:?jira adapter: transition needs NAME}" ;;
+  assign)      need_key; run assign "$KEY" "${2:?jira adapter: assign needs QUERY}" ;;
+  *) echo "✗ jira adapter: unknown verb '$VERB'" >&2; exit 2 ;;
+esac

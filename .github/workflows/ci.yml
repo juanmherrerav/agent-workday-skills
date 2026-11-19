@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: BattlePlan tests
+        working-directory: skills/BattlePlan
+        run: uv run --python 3.12 --with pytest --with openpyxl pytest -q tests/
+      - name: Shell syntax
+        run: for f in skills/*/Tools/*.sh install.sh; do bash -n "$f"; done
+      - name: Skill frontmatter
+        run: |
+          for s in skills/*/SKILL.md; do
+            head -1 "$s" | grep -qx -- '---' || { echo "$s: no frontmatter"; exit 1; }
+            grep -q '^name: ' "$s" && grep -q '^description: ' "$s" || { echo "$s: missing name/description"; exit 1; }
+          done

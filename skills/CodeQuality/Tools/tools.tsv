@@ -1,0 +1,25 @@
+language	category	priority	tool	install	run	notes
+js	security	P0	secretlint	secretlint @secretlint/secretlint-rule-preset-recommend	$NPX secretlint "**/*" --format json > $OUT/secretlint.json	leaked credentials; needs .secretlintrc.json (Install creates it with --init)
+js	security	P0	npm-audit	-	$PM audit --json > $OUT/npm-audit.json	dependency CVEs; network call; uses the repo package manager
+js	lint	P1	oxlint	oxlint	$NPX oxlint $SRC --format json > $OUT/oxlint.json	fast correctness lint, zero config
+js	lint	P1	eslint	eslint eslint-plugin-sonarjs eslint-plugin-security eslint-plugin-unicorn	$NPX eslint $SRC --format json --output-file $OUT/eslint.json	deep lint; needs an eslint config in the repo, otherwise FAILED
+js	types	P1	tsc	typescript	$NPX tsc --noEmit --pretty false > $OUT/tsc.txt	uses the repo tsconfig.json
+js	types	P2	type-coverage	type-coverage	$NPX type-coverage --detail > $OUT/type-coverage.txt	list of any-typed sites + typed %
+js	deps	P1	madge	madge	$NPX madge --circular --json $SRC > $OUT/madge-circular.json	circular imports
+js	deadcode	P2	knip	knip	$NPX knip --reporter json > $OUT/knip.json	unused files, exports, dependencies, types
+js	duplication	P2	jscpd	jscpd	$NPX jscpd $SRC --ignore "**/node_modules/**,**/dist/**,**/.next/**,**/reports/**" --reporters json --output $OUT/jscpd	clone blocks; also understands .py
+js	complexity	P2	lizard	pip:lizard	lizard $SRC -x "*/node_modules/*" -x "*/dist/*" -x "*/.venv/*" -w > $OUT/lizard.txt	multi-language CCN and length warnings; pip package even for js repos
+js	format	P2	prettier	prettier	$NPX prettier --check $SRC > $OUT/prettier.txt	format drift
+js	coverage	P2	c8	c8	-	not run by the baseline; the Loop runs `$NPX c8 <unit test cmd>` scoped to the target
+python	security	P0	bandit	bandit	bandit -r $SRC -x ./.venv,./node_modules -f json -o $OUT/bandit.json -q	code security findings
+python	security	P0	pip-audit	pip-audit	pip-audit --format json --output $OUT/pip-audit.json	dependency CVEs; network call
+python	lint	P1	ruff	ruff	ruff check $SRC --output-format json > $OUT/ruff.json	fast lint
+python	types	P1	mypy	mypy	mypy $SRC --exclude "(\.venv|node_modules)/" --output json > $OUT/mypy.jsonl	one JSON object per line
+python	deadcode	P2	vulture	vulture	vulture $SRC --exclude .venv,node_modules --min-confidence 80 > $OUT/vulture.txt	unused code
+python	duplication	P2	pylint	pylint	pylint --disable=all --enable=duplicate-code --output-format=json2 $SRC > $OUT/pylint-dup.json	duplicate-code checker only; slow on large trees
+python	complexity	P2	lizard	lizard	lizard $SRC -x "*/node_modules/*" -x "*/dist/*" -x "*/.venv/*" -w > $OUT/lizard.txt	same command as the js row; the baseline runs it once
+python	format	P2	ruff-format	ruff	ruff format --check $SRC > $OUT/ruff-format.txt	format drift
+python	coverage	P2	pytest-cov	pytest-cov	-	not run by the baseline; the Loop runs `pytest --cov=<module>` scoped to the target
+yaml	security	P0	checkov	checkov	checkov -d . --skip-path node_modules --skip-path .venv --output json --quiet > $OUT/checkov.json	IaC misconfigurations; heavy install, skip the yaml language when the YAML is not IaC
+yaml	lint	P1	yamllint	yamllint	yamllint -f parsable . > $OUT/yamllint.txt	syntax and style
+yaml	format	P2	prettier	npm:prettier	$NPX prettier --check "**/*.{yaml,yml}" > $OUT/prettier-yaml.txt	npm package; needs a package.json

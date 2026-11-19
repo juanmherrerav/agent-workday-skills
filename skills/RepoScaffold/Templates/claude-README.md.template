@@ -1,0 +1,49 @@
+# `.claude/` — shared agent automation
+
+This folder holds the **shareable logic** for working issues with an agent. It is committed so
+every developer gets the same automation. Everything **machine-specific** lives under
+`.claude/local/` and is git-ignored.
+
+## Committed (shared logic)
+
+| Path | What it is |
+| --- | --- |
+| `workflow-profile.sh` | The repo profile: issue pattern, branches, env files, setup/test/serve commands, ports, preview, stakeholder. Read by the IssueFlow and ProductionDeployment skills. |
+| `release/settings-matrix.json` | Environment-parity rules for production releases (optional). |
+| `README.md` | This contract. |
+
+The skills themselves live in each developer's `$SKILLS_HOME/` (IssueFlow, IssueSync,
+ProductionDeployment, CodeQuality). Nothing product-specific is in them; it is
+all in the profile above.
+
+## Git-ignored (per-machine runtime)
+
+| Path | What it is |
+| --- | --- |
+| `.claude/local/worktrees/<issue>-<slug>/` | Feature worktree checkouts |
+| `.claude/local/worktree-registry.md` | The **live** worktree ledger (paths, branches, ports) |
+| `.claude/local/<tracker>/{cache,worklog,INDEX.md}` | Tracker API data and your worklogs (IssueSync adapter) |
+| `.claude/settings.local.json` | This machine's permission settings |
+| `CLAUDE.local.md` (repo root) | Your personal instruction overrides |
+
+## Permission architecture
+
+**Decision ({{DECISION_DATE}}):** this project runs the agent in `{{PERMISSION_MODE}}` mode.
+{{PERMISSION_RATIONALE}}
+
+Individual edits are not the validation surface. End-to-end behavior is: the agent must prove
+the system works at the gates (unit, full e2e, CI-parity preflight, human validation), not
+justify each file change.
+
+**Gotcha:** the agent resolves permissions per project. A project `settings.local.json` that
+omits `Edit`/`Write` or lacks `defaultMode` will prompt on every file edit even if the user's
+global settings allow them. The parent does not cascade tool permissions when a project-level
+file exists, so the file must be complete.
+
+## First-time setup for a new developer
+
+1. Put credentials in `.env.local` (see `.env.example`). Never commit it.
+2. Install the skills (symlink or copy into `$SKILLS_HOME/`).
+3. Write `.claude/settings.local.json` for your machine (template in the RepoScaffold skill).
+4. The live ledger and tracker cache are created on demand by the first issue run.
+5. Work an issue: `work {{ISSUE_PREFIX}}-123`.

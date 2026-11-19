@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "defaultMode": "{{PERMISSION_MODE}}",
+    "allow": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "LS",
+      "WebFetch",
+      "WebSearch",
+      "NotebookRead",
+      "NotebookEdit",
+      "TodoWrite",
+      "ExitPlanMode",
+      "Task",
+      "Skill"
+    ],
+    "additionalDirectories": []
+  }
+}

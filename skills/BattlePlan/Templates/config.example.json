@@ -1,0 +1,61 @@
+{
+  "owner": "Alex",
+  "owner_aliases": ["Alex", "alex", "me", "AL"],
+
+  "tracker": {
+    "backend": "csv",
+    "path": "~/Documents/battleplan/tracker",
+    "_backend_options": {
+      "csv": "path = a directory; one <Tab>.csv per tab. Put it in a synced folder to share it across machines.",
+      "xlsx": "path = an .xlsx file, e.g. ~/OneDrive/battleplan.xlsx. Close it in Excel before the tools write.",
+      "gsheets": "spreadsheet_id = the id in the sheet URL; service_account = path to the JSON key (default ~/.config/gspread/service_account.json). Share the sheet with the service account email as Editor."
+    }
+  },
+
+  "plans_dir": "~/Documents/battleplan/daily",
+  "plans_git_sync": false,
+
+  "workday": {"hours": 8, "max_threads": 4},
+
+  "contexts": {
+    "Work": {
+      "description": "Day job",
+      "tab": "Work",
+      "hours": 6,
+      "confidential": true,
+      "forbidden_patterns": ["\\bcustomer-name\\b", "\\.internal\\b"],
+      "sub_contexts": {
+        "Product": {"thread_profile": "heavy", "repo": "my-app", "repo_path": "~/dev/my-app", "issue_skill": "IssueFlow"},
+        "Admin": {"thread_profile": "light", "hours_cap": 0.5}
+      },
+      "evidence": {
+        "paths": ["/dev/work/"],
+        "ticket_prefixes": ["ABC"],
+        "config_dirs": []
+      }
+    },
+    "Personal": {
+      "description": "Life admin, learning, side projects",
+      "tab": "Personal",
+      "hours": 1.5,
+      "sub_contexts": {
+        "General": {"thread_profile": "medium"}
+      },
+      "evidence": {"paths": ["/dev/personal/"], "ticket_prefixes": [], "config_dirs": []}
+    }
+  },
+
+  "thread_profiles": {
+    "heavy": {"description": "Full dev work: code, PRs, deploys", "default_estimate_minutes": 90, "parallel_capable": true},
+    "medium": {"description": "Mixed: research, docs, some code", "default_estimate_minutes": 60, "parallel_capable": true},
+    "light": {"description": "Quick items: messages, follow-ups, admin", "default_estimate_minutes": 30, "parallel_capable": false}
+  },
+  "size_estimates_minutes": {"S": 30, "M": 60, "L": 120, "XL": 240},
+
+  "automation_prompt_prefixes": [],
+
+  "hosts": {
+    "mac": {"default_context_by_config_dir": {".claude": "Work"}, "draft_context": ""},
+    "linux": {"default_context_by_config_dir": {}, "draft_context": ""}
+  }
+}

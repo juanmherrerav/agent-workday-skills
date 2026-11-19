@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# IssueSync adapter: none — there is no tracker. `markup` answers markdown (comments end up in
+# PR bodies); every other verb exits 3 with the fallback IssueFlow should take.
+set -u
+VERB="${1:-}"
+case "$VERB" in
+  markup) echo markdown; exit 0 ;;
+  pull|show|list)  echo "TRACKER=none — no tracker. Ask the user for the acceptance criteria and scope." >&2 ;;
+  comment)         echo "TRACKER=none — no tracker. Put the same content in the PR body." >&2 ;;
+  transitions|transition|assign) echo "TRACKER=none — no tracker. Nothing to transition or assign; the PR state is the status." >&2 ;;
+  *)               echo "TRACKER=none — no tracker configured (verb '$VERB')." >&2 ;;
+esac
+exit 3

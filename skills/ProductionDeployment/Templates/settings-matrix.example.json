@@ -1,0 +1,37 @@
+{
+  "description": "Env parity matrix for <project>. Copy to <repo>/.claude/release/settings-matrix.json (or wherever ENV_MATRIX_FILE in the profile points). List ONLY variables the code reads (git grep them). This file holds RULES; provider identity (team, project, their IDs) lives once in .claude/workflow-profile.sh as PREVIEW_SCOPE / PREVIEW_PROJECT / PREVIEW_TEAM_ID / PREVIEW_PROJECT_ID.",
+  "variables": [
+    { "name": "API_BASE_URL", "rule": "SAME", "description": "Upstream API base URL, shared" },
+    { "name": "DB_URL", "rule": "SAME", "description": "Database URL, shared instance" },
+    {
+      "name": "DB_TABLE_PREFIX",
+      "rule": "ENV-SPECIFIC",
+      "description": "Separates prod vs preview data",
+      "production_pattern": "prod_",
+      "preview_pattern": "dev_"
+    },
+    {
+      "name": "AUTH_ISSUER",
+      "rule": "ENV-SPECIFIC",
+      "description": "IdP issuer: production tenant vs preview/sandbox tenant",
+      "production_pattern": "<prod-idp-domain>",
+      "preview_pattern": "<preview-idp-domain>"
+    },
+    { "name": "AUTH_CLIENT_ID", "rule": "ENV-SPECIFIC", "description": "Separate app registration per env" },
+    { "name": "ENABLE_AUTH", "rule": "SAME", "description": "Auth must be on in both" },
+    { "name": "LLM_MODEL", "rule": "SAME", "description": "Model id, shared" },
+    { "name": "SKIP_SSL_VERIFY", "rule": "PRESENT", "required_in": ["production"], "description": "Must be explicitly set in production" }
+  ],
+  "sensitive_var_handling": {
+    "description": "Vercel 'sensitive' vars come back empty from env pull and cannot be decrypted. Validate them indirectly (Deploy.md Tier 2).",
+    "known_sensitive_vars": ["DB_URL", "DB_TABLE_PREFIX", "AUTH_ISSUER", "AUTH_CLIENT_ID"]
+  },
+  "runtime_endpoints": {
+    "production": "https://<prod-domain>/api/config",
+    "preview": "https://<preview-domain>/api/config",
+    "expected_fields": ["auth.domain", "auth.clientId", "auth.issuer", "enableAuth"]
+  },
+  "known_dead_vars": {
+    "<VAR>": "why it is safe to ignore"
+  }
+}

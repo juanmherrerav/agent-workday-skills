@@ -1,0 +1,47 @@
+# Contributing to {{PROJECT_NAME}}
+
+## Quick start
+
+```bash
+git clone {{REPO_URL}}
+cd {{REPO_DIR}}
+{{INSTALL_CMDS}}
+cp .env.example .env.local        # then fill in the credentials it lists
+{{SERVE_CMD}}                     # health: GET {{HEALTH_PATH}}
+```
+
+## Working an issue, branches, gates
+
+All of that is defined once in [CLAUDE.md](CLAUDE.md) (issue workflow, the two approval
+phrases, branch naming, merge rules, the commands) and [docs/TESTING.md](docs/TESTING.md)
+(tests, tags, coverage gate). This file does not restate them. The short version: branches
+are named exactly the issue key (`{{ISSUE_PREFIX}}-123`), PRs target
+`{{INTEGRATION_BRANCH}}`, and nothing merges without the gates in CLAUDE.md being green.
+
+## Commits
+
+[Conventional Commits](https://www.conventionalcommits.org/): `feat(scope): …`,
+`fix(scope): …`, `docs: …`, `refactor: …`, `test: …`, `chore: …`. One logical change per
+commit; the issue key goes in the branch, not in every subject.
+
+{{PRECOMMIT_NOTE}}
+
+## Code style
+
+{{STYLE_NOTES}}
+
+## Tests
+
+See [docs/TESTING.md](docs/TESTING.md). New code comes with tests; bug fixes come with a
+regression test; stale tests are updated to the new requirement, never weakened.
+
+## Documentation
+
+- Behavior change → `README.md` and the relevant `docs/`
+- New env var → `.env.example`, the profile's `ENV_REQUIRED_VARS`, and the release matrix
+- Architecture change → `docs/architecture/`
+- Breaking change → a migration note in the PR and the release changelog
+
+## Getting help
+
+Questions and blockers go to {{HELP_CHANNEL}}. Check `docs/` first.

@@ -1,0 +1,10 @@
+
+# ── agent automation (RepoScaffold) ─────────────────────────────────────────────
+# Shareable LOGIC is tracked under .claude/ (workflow-profile.sh, release/, README.md).
+# Per-machine RUNTIME is never committed:
+.claude/local/                 # worktrees, live ledger, tracker cache + worklogs
+.claude/settings.local.json    # this machine's permission settings
+CLAUDE.local.md                # personal instruction overrides
+reports/                       # CodeQuality scan + loop outputs
+.jira-sync/                    # legacy tracker cache location
+# ── end agent automation ────────────────────────────────────────────────────────

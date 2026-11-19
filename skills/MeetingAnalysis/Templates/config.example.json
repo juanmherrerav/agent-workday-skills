@@ -1,0 +1,49 @@
+{
+  "owner": "Alex",
+  "owner_aliases": ["Alex", "alex", "AL", "me"],
+
+  "roster_file": "~/.config/agent-skills/MeetingAnalysis/roster.md",
+  "recordings_archive": "~/Recordings/processed",
+  "transcription_model": "turbo",
+
+  "tracker": "BattlePlan",
+
+  "contexts": {
+    "work": {
+      "meetings_dir": "~/notes/work/meetings",
+      "confidential": true,
+      "language": "en",
+      "tracker_sub_context": "Product",
+      "tracker_sub_context_rules": [
+        {"match": "onboarding|access request|payroll|benefits|equipment|hr\\b", "sub_context": "Admin"}
+      ],
+      "notes": {
+        "provider": "google-meet",
+        "account": "you@example.com",
+        "backfill_start": "2026-01-01"
+      },
+      "ingest": {
+        "home": "~/Recordings/work",
+        "drive_recordings_dir": "",
+        "interval_min": 60,
+        "hours": "8-20",
+        "tracker": "add",
+        "allowed_tools": [
+          "mcp__claude_ai_Google_Drive__search_files",
+          "mcp__claude_ai_Google_Drive__read_file_content",
+          "mcp__claude_ai_Google_Drive__get_file_metadata",
+          "mcp__claude_ai_Google_Docs__read_doc",
+          "mcp__claude_ai_Gmail__search_threads",
+          "mcp__claude_ai_Gmail__get_thread",
+          "mcp__claude_ai_Google_Calendar__list_events"
+        ]
+      }
+    },
+    "personal": {
+      "meetings_dir": "~/notes/personal/meetings",
+      "language": "auto",
+      "tracker_sub_context": "General",
+      "notes": {"provider": "pasted"}
+    }
+  }
+}

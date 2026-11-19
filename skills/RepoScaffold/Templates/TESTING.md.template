@@ -1,0 +1,91 @@
+# Testing Guide — {{PROJECT_NAME}}
+
+**Coverage now:** run `{{COVERAGE_CMD}}`. **Gate:** {{COVERAGE_GATE}}, enforced in CI.
+
+## Principles
+
+1. **Fast.** Unit tests run in milliseconds; the whole unit suite in under a minute.
+2. **Isolated.** No shared state, no order dependence, no network in unit tests.
+3. **Clear.** The test name states the intent; a failure points at the cause.
+4. **Stable.** Flaky tests are fixed or quarantined with `@wip` the same day, never retried into green.
+5. **Honest.** A stale test is updated to the new requirement. It is never weakened or skipped to pass.
+
+## Test types
+
+| Type | Location | Runs | Needs |
+| --- | --- | --- | --- |
+| Unit | `{{UNIT_DIR}}` | `{{UNIT_CMD}}` | nothing external (mock upstreams) |
+| Integration | `{{INTEGRATION_DIR}}` | `{{INTEGRATION_CMD}}` | local services only |
+| End-to-end | `{{E2E_DIR}}` | `{{E2E_CMD}}` | a running app (`BASE_URL`), fixtures or credentials |
+
+Unit tests follow Arrange → Act → Assert, one behavior per test, and mock at the boundary
+(HTTP client, repository), not in the middle of the code under test.
+
+## E2E tag taxonomy
+
+Tags decide where a scenario runs. Every scenario carries exactly one *kind* tag and any
+number of *domain* tags.
+
+| Tag | Kind | Meaning | CI | Nightly |
+| --- | --- | --- | --- | --- |
+| `@smoke` | kind | app shell loads, key elements render | yes | yes |
+| `@api-only` | kind | hits the backend HTTP API, no browser | yes | yes |
+| `@live-api` | kind | needs real upstream credentials | **no** | fixture mode only |
+| `@wip` | kind | being written or quarantined | **no** | **no** |
+| `@<domain>` | domain | one per feature area ({{DOMAIN_TAGS}}) | per kind | per kind |
+
+- **CI** runs `not @live-api and not @wip` in fixture mode.
+- **Full e2e** (the IssueFlow gate) runs `not @wip` in fixture mode against a fresh server.
+- **Live validation** runs `@live-api` scenarios with real credentials, by hand or nightly.
+
+## API modes: fixture, live, record
+
+The app reads `{{API_MODE_VAR}}` and the e2e suite runs the same scenarios in all three modes.
+
+| Mode | Value | What happens | When |
+| --- | --- | --- | --- |
+| Fixture | `fixture` (default) | upstream calls are replayed from `{{FIXTURES_DIR}}` | CI, local dev without credentials |
+| Live | `live` | real upstream calls | regression validation, new features |
+| Record | `record` | live, and every upstream response is saved as a fixture | after an upstream contract changes |
+
+Re-record with the IssueFlow tool, then commit the fixtures so fixture mode keeps working
+without credentials:
+
+```bash
+bash $SKILLS_HOME/IssueFlow/Tools/e2e.sh --record <worktree>
+git add {{FIXTURES_DIR}} && git commit -m "chore(e2e): re-record fixtures"
+```
+
+Fixtures must never contain secrets. Scrub tokens and personal data in the recorder.
+
+## Running e2e locally
+
+```bash
+# full suite on a fresh server, torn down afterwards (the gate IssueFlow runs)
+bash $SKILLS_HOME/IssueFlow/Tools/e2e.sh <worktree>
+
+# a subset, against a server you started yourself
+BASE_URL=http://127.0.0.1:{{PORT_BASE_BACKEND}} {{E2E_CMD}} -- --tags "@smoke"
+```
+
+Visual debugging knobs ({{E2E_DEBUG_KNOBS}}) are documented in `{{E2E_DIR}}/README.md`.
+
+## Coverage targets
+
+| Area | Target | Priority |
+| --- | --- | --- |
+| {{CRITICAL_AREA}} | 90%+ | critical |
+| Integrations / adapters | 80%+ | high |
+| API endpoints | 85%+ | high |
+| Utilities | 75%+ | medium |
+| Startup / configuration | 60%+ | low |
+
+The CI gate is the floor ({{COVERAGE_GATE}}). Raise it when the suite earns it; never lower it
+to pass.
+
+## What CI does with tests
+
+Lint → security → unit (runtime matrix) → coverage gate → e2e in fixture mode with placeholder
+secrets → summary. The nightly workflow runs the full non-`@wip` suite and keeps screenshots and
+reports as artifacts. The same lint/type commands are the local `PREFLIGHT_CHECKS`, so a green
+preflight means a green lint job.
